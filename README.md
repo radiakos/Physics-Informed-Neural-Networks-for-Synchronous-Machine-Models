@@ -1,0 +1,1 @@
+# Physics-Informed-Neural-Networks-for-Syncrhonous-Machine-Models
