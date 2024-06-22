@@ -1,0 +1,13 @@
+hydra-core==1.3.2
+matplotlib
+numpy
+omegaconf==2.3.0
+pandas
+pyDOE
+PyYAML
+scikit_learn
+scipy
+torch==2.1.0 #+cu118
+tqdm
+transformers
+wandb

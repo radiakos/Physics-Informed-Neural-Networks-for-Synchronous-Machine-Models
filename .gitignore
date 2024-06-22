@@ -1,0 +1,12 @@
+figs/
+__pycache__/
+*.pyc
+data/
+outputs/
+wandb/
+src/nn/model_actions.py
+model/
+logs/
+model_new/
+data2/
+model_new2/
