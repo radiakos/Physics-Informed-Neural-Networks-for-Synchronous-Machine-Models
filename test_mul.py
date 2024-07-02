@@ -6,9 +6,9 @@ import wandb
 
 
 comb = [
-        [1, 1 , 1e-5 , 1],
+        [1, 1 , 1e-5 , 0],
         ]
-seed = [3]
+seed = [1,3, 7]
 list = ["Static","Dynamic"]
 
 for i in range(len(comb)):
@@ -29,7 +29,7 @@ for i in range(len(comb)):
             print("Combination: ",i, " Seed: ",j, comb[i], seed[j])
             log_data_metrics_to_wandb(run,cfg)
             log_pinn_metrics_to_wandb(run,cfg)
-            #network1.cfg.nn.num_epochs=20000
+
             num_of_data = 4000000
             num_of_skip_data_points = 23
             num_of_skip_col_points = 5
@@ -50,17 +50,6 @@ for i in range(len(comb)):
 
 
             network2.pinn_train( weight_data, weight_dt, weight_pinn, weight_pinn_ic, perc_of_data, perc_of_pinn_data, num_of_skip_data_points, num_of_skip_col_points, num_of_skip_val_points,run)
-            """
-            network3 = NeuralNetworkActions(cfg)
 
-            weight_data = 1
-            weight_dt = 1e-4
-            weight_pinn =  1e-5
-            weight_pinn_ic = 0
-
-
-            network3.pinn_train( weight_data, weight_dt, weight_pinn, weight_pinn_ic, perc_of_data, perc_of_pinn_data, num_of_skip_data_points, num_of_skip_col_points, num_of_skip_val_points,run)
-
-            """
 
             run.finish()

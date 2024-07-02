@@ -13,9 +13,12 @@ def train(config=None):
     if cfg.nn.type == "PinnA":
         cfg.nn.num_epochs = 10000
     cfg.nn.hidden_layers = config.hidden_layers
+
+
     if config.optimizer == "LBFGS":
         lbfgs_iter = 20 if cfg.nn.type == "DynamicNN" else 20
         cfg.nn.num_epochs = int(cfg.nn.num_epochs/lbfgs_iter)
+        cfg.nn.early_stopping_patience = int(cfg.nn.early_stopping_patience/lbfgs_iter)
     cfg.nn.optimizer = config.optimizer
     cfg.nn.update_weight_method = config.update_weight_method
 
@@ -29,8 +32,7 @@ def train(config=None):
 
     perc_of_data = 1 #config.perc_of_data
     perc_of_pinn_data = 1 #config.perc_of_pinn_data
-    #num_of_skip_data_points = 23
-    #num_of_skip_col_points = 5
+
     num_of_skip_data_points = config.num_of_skip_data_points
     num_of_skip_col_points = config.num_of_skip_col_points
     num_of_skip_val_points = 4
@@ -40,7 +42,6 @@ def train(config=None):
     weight_pinn_ic = config.weight_pinn_ic
     if cfg.nn.type == "PinnA":
         weight_pinn_ic = 0
-    # Adjust the maximum number of iterations here
 
     network.pinn_train( weight_data, weight_dt, weight_pinn, weight_pinn_ic, perc_of_data, perc_of_pinn_data, num_of_skip_data_points, num_of_skip_col_points, num_of_skip_val_points,run)
         
@@ -59,16 +60,15 @@ if __name__ == "__main__":
             "weight_data": {"values": [0,1]},
             "weight_dt": {"values": [0,1e-4]},
             "weight_pinn": {"values": [0,1e-5]},
-            "weight_pinn_ic": {"values": [0,1e-3,1e-4]},
+            "weight_pinn_ic": {"values": [0,1e-3]},
             "nn_type" :{"values": ["DynamicNN"]}, #,"PinnAA"
-            "hidden_layers" : {"values": [3,4]},
+            "hidden_layers" : {"values": [3]},
             "optimizer" : {"values": ["LBFGS"]},
-            "comb": {"values": [[1, 0, 0, 0], [1, 1e-4, 0, 0], [1, 1e-4, 1e-5, 0], [1, 1e-4, 1e-5, 1e-3], [1, 0, 0, 1e-3], [0, 0, 1e-5, 1e-3]]},
-            "update_weight_method" : {"values": ["Static","Dynamic","Sam"]},#,"Dynamic"
-            "num_of_skip_data_points" :{"values": [14,23]},
-            "num_of_skip_col_points" :{"values": [5,7]},#5,9, 13,19,23
+            "update_weight_method" : {"values": ["Static","Sam"]},#,"Dynamic"
+            "num_of_skip_data_points" :{"values": [23]},
+            "num_of_skip_col_points" :{"values": [5]},#5,9, 13,19,23
             "transform_input":{"values": ["None"]},
-            "transform_output":{"values": ["None","Std","MinMax","MinMax2"]},
+            "transform_output":{"values": ["None"]},
             # Add other parameters from setup_dataset_nn.yaml as needed
         }
         
@@ -79,4 +79,5 @@ if __name__ == "__main__":
 
     # Run the sweep
     wandb.agent(sweep_id, function=train,count=250)
+    
     wandb.finish()
