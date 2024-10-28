@@ -3,8 +3,9 @@ import torch.nn as nn
 
 from omegaconf import OmegaConf
 import wandb
-from src.nn.nn_model import Net, Network, PinnA
+from src.nn.nn_model import Net, Network, PinnA, Kalm
 import os
+
 
 def find_files(cfg, dir):
     files = []
@@ -17,7 +18,7 @@ def find_files(cfg, dir):
     return files
 
 def define_model_from_name(name):
-    name_list = ["DynamicNN", "PinnA", "PinnAA", "PinnB"]
+    name_list = ["DynamicNN", "PinnA", "PinnAA", "PinnB", "KAN"]
     #CHECK if name_list is in the name
     for n in name_list:
         if n in name:
@@ -50,6 +51,8 @@ def define_nn_model(cfg, input_dim, output_dim):
     """
     if cfg.nn.type == "StaticNN":
         model = Net(input_dim, cfg.nn.hidden_dim, output_dim)
+    if cfg.nn.type == "KAN":
+        model = Kalm(input_dim, cfg.nn.hidden_dim, output_dim)
     elif cfg.nn.type == "DynamicNN" or cfg.nn.type == "PinnB" or cfg.nn.type == "PinnA":
         model = Network(input_dim, cfg.nn.hidden_dim, output_dim, cfg.nn.hidden_layers)
     elif cfg.nn.type == "PinnAA":

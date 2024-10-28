@@ -13,7 +13,7 @@ def train(config=None):
     if cfg.nn.type == "PinnA":
         cfg.nn.num_epochs = 10000
     cfg.nn.hidden_layers = config.hidden_layers
-
+    cfg.nn.num_epochs = 1000
 
     if config.optimizer == "LBFGS":
         lbfgs_iter = 20 if cfg.nn.type == "DynamicNN" else 20
@@ -50,23 +50,23 @@ def train(config=None):
 
 if __name__ == "__main__":
     # Load configuration from YAML file
-    cfg = OmegaConf.load("src/conf/setup_dataset_nn.yaml")
+    cfg = OmegaConf.load("src/conf/setup_dataset.yaml")
 
     # Sweep configuration
     sweep_config = {
         "method": "bayes", #choose between grid or random or bayes
         "metric": {"name": "Val_loss", "goal": "minimize"},
         "parameters": {
-            "weight_data": {"values": [0,1]},
-            "weight_dt": {"values": [0,1e-4]},
-            "weight_pinn": {"values": [0,1e-5]},
-            "weight_pinn_ic": {"values": [0,1e-3]},
-            "nn_type" :{"values": ["DynamicNN"]}, #,"PinnAA"
+            "weight_data": {"values": [1]},
+            "weight_dt": {"values": [1e-4]},
+            "weight_pinn": {"values": [1e-3]},
+            "weight_pinn_ic": {"values": [1e-3]},
+            "nn_type" :{"values": ["KAN"]}, #,"PinnAA" "DynamicNN"
             "hidden_layers" : {"values": [3]},
-            "optimizer" : {"values": ["LBFGS"]},
-            "update_weight_method" : {"values": ["Static","Sam"]},#,"Dynamic"
+            "optimizer" : {"values": ["LBFGS"]}, #,"LBFGS" Adam
+            "update_weight_method" : {"values": ["Static"]},#,"Dynamic"
             "num_of_skip_data_points" :{"values": [23]},
-            "num_of_skip_col_points" :{"values": [5]},#5,9, 13,19,23
+            "num_of_skip_col_points" :{"values": [19]},#5,9, 13,19,23
             "transform_input":{"values": ["None"]},
             "transform_output":{"values": ["None"]},
             # Add other parameters from setup_dataset_nn.yaml as needed
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     }
 
     # Initialize sweep
-    sweep_id = wandb.sweep(sweep_config, project="PINN Thesis")
+    sweep_id = wandb.sweep(sweep_config, project="PINN ΚΑΝ")
 
     # Run the sweep
     wandb.agent(sweep_id, function=train,count=250)

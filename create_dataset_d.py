@@ -10,7 +10,8 @@ os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 
 
 # Load config file using hydra
-@hydra.main(config_path="../Pinn-Thesis/src/conf", config_name="setup_dataset.yaml",version_base=None)
+# @hydra.main(config_path="../Pinn-Thesis/src/conf", config_name="setup_dataset.yaml",version_base=None)
+@hydra.main(config_path=".\src\conf", config_name="setup_dataset.yaml",version_base=None)
 def main(config):
     # Initialize wandb
     run = wandb.init(project=config.wandb.project)

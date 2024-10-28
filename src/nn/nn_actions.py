@@ -4,7 +4,7 @@ import torch.optim as optim
 import os
 import matplotlib.pyplot as plt
 from src.nn.nn_dataset import DataSampler
-from src.nn.nn_model import Net, Network, PinnA, FullyConnectedResNet
+from src.nn.nn_model import Net, Network, PinnA, FullyConnectedResNet, Kalm
 from src.dataset.create_dataset_functions import SM_modelling
 from src.functions import *
 from src.nn.early_stopping import EarlyStopping
@@ -111,12 +111,18 @@ class NeuralNetworkActions():
         """
         This function defines the neural network model
         """
+        print("########HERE#####",self.cfg.nn.type)
+        if self.cfg.nn.type == "KAN": # Static architecture of the neural network
+            print(self.input_dim, self.cfg.nn.hidden_dim, self.output_dim)
+            model = Kalm(self.input_dim, self.cfg.nn.hidden_dim, self.output_dim)
+            # model.speed()
         if self.cfg.nn.type == "StaticNN": # Static architecture of the neural network
             model = Net(self.input_dim, self.cfg.nn.hidden_dim, self.output_dim)
         if self.cfg.nn.type == "DynamicNN" or self.cfg.nn.type == "PinnB" or self.cfg.nn.type == "PinnA": # Dynamic architecture of the neural network
             model = Network(self.input_dim, self.cfg.nn.hidden_dim, self.output_dim, self.cfg.nn.hidden_layers)
         if self.cfg.nn.type == "PinnAA": # Dynamic architecture of the neural network with the PinnA architecture for the output
             model = PinnA(self.input_dim, self.cfg.nn.hidden_dim, self.output_dim, self.cfg.nn.hidden_layers)
+        #############KAN###############
         if self.cfg.nn.type == "ResNet":
             num_blocks=2
             num_layers_per_block=2
@@ -226,6 +232,9 @@ class NeuralNetworkActions():
             return weight_data, weight_dt, weight_pinn, weight_pinn_ic
         elif self.cfg.nn.update_weight_method=="Sam":
             return weight_data, weight_dt, weight_pinn, weight_pinn_ic
+        elif self.cfg.nn.update_weight_method=="NTK":
+            raise Exception("Not Implemented")
+        ########### Add more methods KAN here ###########
         else:
             raise Exception("Weight update method not found")
 
@@ -366,7 +375,7 @@ class NeuralNetworkActions():
             return no_time + y_pred*time
         if self.cfg.nn.type == "PinnB":
             return no_time + y_pred
-        if self.cfg.nn.type in ["DynamicNN", "PinnAA", "ResNet"]:
+        if self.cfg.nn.type in ["DynamicNN", "PinnAA", "ResNet", "KAN"]:
             return y_pred
         else:
             raise Exception('Enter valid NN type! (zeroth_order or first_order')
@@ -408,7 +417,7 @@ class NeuralNetworkActions():
             return no_time + y_pred*time
         if self.cfg.nn.type == "PinnB":
             return no_time + y_pred
-        if self.cfg.nn.type in ["DynamicNN", "PinnAA", "ResNet"]:
+        if self.cfg.nn.type in ["DynamicNN", "PinnAA", "ResNet","KAN"]:
             return y_pred
         else:
             raise Exception('Enter valid NN type! (zeroth_order or first_order')
@@ -495,6 +504,66 @@ class NeuralNetworkActions():
         
         return loss_point
     
+    ##To be continued
+    
+    # def compute_ntk_jacrev(model, x,res=0):
+    #     """
+    #     Compute the Neural Tangent Kernel (NTK) using torch.func.jacrev.
+
+    #     Args:
+    #         model: The neural network model (PINN).
+    #         x: Input data of shape (n_samples, input_dim).
+
+    #     Returns:
+    #         ntk: The NTK matrix of shape (n_samples, n_samples).
+    #     """
+        
+    #     # Get model parameters as a dictionary {name: param}
+    #     params = {name: param for name, param in model.named_parameters()}
+
+    #     # Define a function that computes the model output with respect to the input and parameters
+    #     # def model_fn(params, x):
+    #     #     return func.functional_call(model, params, (x,))
+        
+    #     def model_fn(params, x):
+    #         x.requires_grad = True
+    #         # Call the entire model and handle residuals here
+    #         pred = func.functional_call(model, params, (x,))
+    #         if res == 1:
+    #             delta = pred[:, 0:1]
+    #             delta_t = torch.autograd.grad(delta, x, torch.ones_like(delta), retain_graph=True, create_graph=True)[0]
+    #             omega = pred[:, 1:2]
+    #             return delta_t - omega
+    #         elif res == 2:
+    #             delta = pred[:, 0:1]
+    #             omega = pred[:, 1:2]
+    #             V = pred[:, 2:3]
+    #             omega_t = torch.autograd.grad(omega, x, torch.ones_like(omega), retain_graph=True, create_graph=True)[0]
+    #             Pe = system.E * V * torch.sin(delta)
+    #             Pm_t = 1.0 + 0.5 * torch.sin(10 * x)
+    #             return omega_t - (Pm_t - Pe - system.D * omega) / system.M
+    #         elif res == 3:
+    #             delta = pred[:, 0:1]
+    #             V = pred[:, 2:3]
+    #             V_t = torch.autograd.grad(V, x, torch.ones_like(V), retain_graph=True, create_graph=True)[0]
+    #             return V_t - (system.V_ref - V + system.k * torch.sin(delta)) / system.tau
+    #         else:
+    #             return pred
+
+    #     # Compute the Jacobian of the output with respect to the parameters for the entire batch
+    #     jac_fn = func.jacrev(model_fn, argnums=0)  # Derivative w.r.t. model parameters
+
+    #     # Evaluate the Jacobian
+    #     jacobians = jac_fn(params, x)
+
+    #     # Flatten each Jacobian and concatenate them along the second dimension
+    #     jac_flattened = torch.cat([jac.reshape(jac.shape[0], -1) for jac in jacobians.values()], dim=1)
+
+    #     # Compute NTK as J(x) @ J(x)^T
+    #     ntk = jac_flattened @ jac_flattened.T
+
+    #     return ntk
+
     def calculate_point_grad(self, x_train, y_train):
         """
         This function calculates the pinn loss either for collocation points or for data points
@@ -764,7 +833,7 @@ class NeuralNetworkActions():
             if (epoch + 1) % 50 == 0:
                 # log some plots to wandb
                 if run is not None:
-                    self.log_plot(outputs, y_val, epoch, run)
+                    self.log_plot(outputs, y_val, epoch, run,x_val)
 
                 print(f'Epoch [{epoch+1}/{self.cfg.nn.num_epochs}], Loss: {self.loss_total.item():.4f}, Loss_data: {self.loss_data.item():.4f}, Loss_dt: {self.loss_dt:.4f}, Loss_pinn: {self.loss_pinn:.4f}' ,self.scheduler.get_last_lr(), val_loss)
                 if self.cfg.nn.update_weight_method=="Sam":
@@ -850,9 +919,11 @@ class NeuralNetworkActions():
         self.weight_pinn_ic = weight_pinn_ic
         # training
         self.model.train()
+        print("getting in training")
         for epoch in range(self.cfg.nn.num_epochs):
             # training
             self.model.train() # set the model to training mode
+
             def closure():
                 output, dydt0, ode0 = self.calculate_point_grad2(x_train, y_train) # calculate nn output and its gradient for the data points, and the ode solution for the target y_train
                 dydt1, ode1 = self.calculate_point_grad2(x_train_col, None) # calculate nn output gradient for the collocation points, and the ode solution for the nn output
@@ -896,10 +967,10 @@ class NeuralNetworkActions():
                 outputs = self.forward_pass2(x_val)
                 loss = self.criterion(outputs, y_val)
                 val_loss = loss.item() 
-            if (epoch + 1) % 50 == 0:
+            if (epoch + 1) % 1 == 0:
                 # log some plots to wandb
                 if run is not None:
-                    self.log_plot(outputs, y_val, epoch, run)
+                    self.log_plot(outputs, y_val, epoch, run,x_val)
 
                 print(f'Epoch [{epoch+1}/{self.cfg.nn.num_epochs}], Loss: {self.loss_total.item():.4f}, Loss_data: {self.loss_data.item():.4f}, Loss_dt: {self.loss_dt.item():.4f}, Loss_pinn: {self.loss_pinn.item():.4f} , Loss_pinn_ic : {self.loss_pinn_ic.item():.4f}', self.scheduler.get_last_lr(), val_loss)
                 if self.cfg.nn.update_weight_method=="Sam":
@@ -981,7 +1052,7 @@ class NeuralNetworkActions():
         if run is not None:
             run.log({"Test loss": test_loss.item() })
             run.log({"MAE Test loss": test_loss_mae.item() })
-            self.log_plot(y_pred, y_test, None, run)
+            self.log_plot(y_pred, y_test, None, run,x_test)
         mae, rmse = self.loss_over_time(x_test, y_test, y_pred, run)
         return test_loss.item()
 

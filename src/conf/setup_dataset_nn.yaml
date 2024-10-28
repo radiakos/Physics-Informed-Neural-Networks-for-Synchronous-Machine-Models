@@ -39,8 +39,9 @@ nn:
   early_stopping_patience: 500
   early_stopping_min_delta: 3e-6
   loss_data_weight : 1
-  loss_dt_weight : 1 #e-4
-  loss_pinn_weight : 1 #e-9
+  loss_dt_weight : 1e-3
+  loss_pinn_weight : 1e-4
+  loss_pinn_ic_weight : 1e-4
   update_weight_method : "Static" # Choose between "Static", "ReLoBRaLo", "Dynamic", "Sam"
 
 dirs:

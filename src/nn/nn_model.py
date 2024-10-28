@@ -1,5 +1,6 @@
 import torch.nn as nn
 import torch
+from kan import KAN
 
 class Net(nn.Module):
     """
@@ -59,6 +60,18 @@ class Network(nn.Module):
             x = torch.tanh(self.hidden[i](x))
         x = self.output(x)
         return x
+    
+class Kalm(nn.Module):
+    """
+    A class to represent a dynamic neural network model with dynamic number of layers based on the respective argument.
+    """
+    def __init__(self, input_size, hidden_size, output_size, num_layers=None):
+        super(Kalm, self).__init__()
+        self.ka=KAN([input_size,hidden_size,output_size],grid=10, k=3, grid_eps=1.0)
+
+    def forward(self, x):
+        
+        return self.ka(x)
     
 
 class PinnA(nn.Module): # DISCARD IT, OUTPUT IS WRONG

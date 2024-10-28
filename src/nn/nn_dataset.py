@@ -113,7 +113,8 @@ class DataSampler:
         model_flag  = self.model_flag #  'SM_IB' or 'SM' or 'SM_AVR' or 'SM_GOV'
         number_of_dataset = self.cfg.dataset.number # Define the number of the dataset to load
         name = model_flag + '/dataset_v' + str(number_of_dataset) + '.pkl'
-        dataset_path = os.path.join(self.cfg.dirs.dataset_dir, name) # Define the path to the dataset
+        print(model_flag,self.cfg.dirs.dataset_dir)
+        dataset_path = "./"+self.cfg.dirs.dataset_dir+"/"+name #os.path.join(self.cfg.dirs.dataset_dir, name) # Define the path to the dataset
         print("Loading data from: ", dataset_path)
         with open(dataset_path, 'rb') as f:
             sol = pickle.load(f)
